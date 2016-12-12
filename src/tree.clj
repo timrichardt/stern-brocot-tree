@@ -87,3 +87,17 @@
           (if (pos? r)
             (cons 1 (Q->SB n d))
             (cons -1 (Q->SB (- n) d))))))))
+
+(defn sgn
+  "Given a number or a sequence of SSB, returns it's sign."
+  [x]
+  (if (coll? x)
+    (first x)
+    (cond (pos? x)
+          1
+
+          (neg? x)
+          -1
+
+          :otherwise
+          0)))
