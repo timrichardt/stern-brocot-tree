@@ -50,7 +50,7 @@
                 (hom-sgn [(+ a b) (+ c d)
                           (+ e f) (+ g h)] u)]
             [s [0 a' 0 b'
-                0 c' 0 d'] [] u'])
+                0 c' 0 d'] u' []])
 
           (= 0 b c d)
           (cond (= 0 f g h)
@@ -147,16 +147,16 @@
                (let [[f & u'] u
                      [g & v'] v]
                  (cond (= f g L)
-                       (bihom-emit (LL B) u v)
+                       (bihom-emit (LL B) u' v')
                        
                        (= f g R)
-                       (bihom-emit (RR B) u v)
+                       (bihom-emit (RR B) u' v')
                        
                        (and (= f L) (= g R))
-                       (bihom-emit (LR B) u v)
+                       (bihom-emit (LR B) u' v')
                        
                        (and (= f R) (= g L))
-                       (bihom-emit (RL B) u v)))))))
+                       (bihom-emit (RL B) u' v')))))))
 
 (defn same-ratio?
   [[a b c d
@@ -186,23 +186,22 @@
   [(- a) (- b) (- c) (- d)
    e f g h])
 
-
 (defn bihom'
   [[a b c d
     e f g h :as B] u v]
   (lazy-seq
    (cond (same-ratio? B)
          (cond (not (= h 0))
-               (Q->SSB d h)
+               (Q->SSB (/ d h))
                
                (not (= g 0))
-               (Q->SSB c g)
+               (Q->SSB (/ c g))
                
                (not (= f 0))
-               (Q->SSB b f)
+               (Q->SSB (/ b f))
                
                :otherwise
-               (Q->SSB a e))
+               (Q->SSB (/ a e)))
          
          :otherwise
          (let [[s [a' b' c' d'
@@ -229,7 +228,7 @@
   [[a b c d
     e f g h] [su & u] [sv & v]]
   (bihom' [(* su sv a) (* su b) (* sv c) d
-           (* su sv e) (* su f) (* sv g) h] u v ))
+           (* su sv e) (* su f) (* sv g) h] u v))
 
 ;; TODO: - laziest absorbtion strategy, more compact decision tree
 
