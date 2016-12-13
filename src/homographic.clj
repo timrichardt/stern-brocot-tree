@@ -8,7 +8,7 @@
 
 (defn- lin-sgn
   "Helper function to determine the sign of a function ax+b for x>0. If
-  a and b have opposite signs, the function returns false, otherwise,
+  a and b have opposite signs, the function returns false, otherwise
   the sign is determined and the function returns the sign."
   [a b]
   (if (= 0 a b)
@@ -33,7 +33,7 @@
   [[_ _ c d]]
   (lin-sgn c d))
 
-(defn- hom-sgn
+(defn hom-sgn
   "Given a homographic map and a sequence of SB, `hom-sgn` returns the
   sign of the evaluated homographic map, the map itself and the rest of
   the sequence.
@@ -66,7 +66,7 @@
   [a       b
    (- c a) (- d b)])
 
-(defn- hom-emit
+(defn hom-emit
   "Given a holographic map and a sequence of SB, tries to emit an SB
   sequence term or absorbs a term from the SB sequence."
   [[a b c d :as H] u]
@@ -113,4 +113,4 @@
    (condp = sign
      0 [0]
      1 (hom' H u)
-     -1 (hom' [(- a) b (- c) d]))))
+     -1 (hom' [(- a) b (- c) d] u))))
