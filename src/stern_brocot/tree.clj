@@ -101,3 +101,11 @@
 
           :otherwise
           0)))
+
+(defn fmt
+  [u]
+  (apply str (map {-1 "-"
+                   0  "0"
+                   1  nil
+                   L  "L"
+                   R  "R"} u)))
