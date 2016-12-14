@@ -1,4 +1,4 @@
-(ns arithmetic
+(ns stern-brocot.arithmetic
   (:require [stern-brocot.tree :refer [L R
                                        SSB->Q
                                        Q->SSB]]
