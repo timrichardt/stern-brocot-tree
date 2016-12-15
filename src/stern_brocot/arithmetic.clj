@@ -43,4 +43,4 @@
 
 (def euler
   "e, the base of the natural logarithm."
-  `(1 ~R ~R ~@(euler-seq 1)))
+  (cons 1 (euler-seq 0)))
