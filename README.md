@@ -31,8 +31,8 @@ your local Maven and can be included into project dependencies.
 Inside a project, reuquire the following functions.
 
 ```
-(require '(stern-brocot [tree :refer [Q->SSB SSB->Q R L fmt]]))
-(require '(stern-brocot [arithmetic :refer [add sub mul div]]))
+> (require '(stern-brocot [tree :refer [Q->SSB SSB->Q R L fmt]]))
+> (require '(stern-brocot [arithmetic :refer [add sub mul div]]))
 ```
 
 `Q->SSB` converts a rational number to it's **SSB** representation and
@@ -80,10 +80,10 @@ like the ordinary arithmetic operations. The example shows how to add
 one to the square root of two.
 
 ```
-(->> (add (Q->SSB 1) `(1 ~R ~@(cycle [L L R R])))
-     (take 42)
-     SSB->Q
-     double)
+> (->> (add (Q->SSB 1) `(1 ~R ~@(cycle [L L R R])))
+       (take 42)
+       SSB->Q
+       double)
 2.414213562373095
 ```
 
