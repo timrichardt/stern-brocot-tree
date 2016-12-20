@@ -5,7 +5,7 @@ The figure above shows the first three levels of the signed Stern-Brocot
 tree **SSB**. Each path in in the right binary tree represents a
 positive rational number while each in the left a negative rational
 number. Irrational numbers can be represented as infinite lazy sequences on
-the trees [3].
+the trees [3]. 
 
 The **SSB** is related to representation of numbers as continued
 fractions and in 1978 Bill Gosper presented an algorithm for arithmetics
