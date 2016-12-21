@@ -1,7 +1,8 @@
 (ns stern-brocot.arithmetic
   (:require [stern-brocot.tree :refer [L R
                                        SSB->Q
-                                       Q->SSB]]
+                                       Q->SSB
+                                       fmt]]
             [stern-brocot.bihomographic :refer [bihom]]))
 
 (defn add
@@ -82,7 +83,7 @@
 
 (defn sqrt
   "Given a sequence of SSB, returns the square root of the sequence on SSB.
-  (very slow and space consuming)"
+  (exponential in time and space)"
   ([u] (cons 1 (sqrt u [1])))
   ([u r]
    (lazy-seq
@@ -92,3 +93,15 @@
 
             (lt u cc)
             (cons L (sqrt u (conj (vec r) L))))))))
+
+(defn SSB->CF
+  "Given a sequence of SSB, returns the continued fraction
+  representation of the sequence."
+  [[s & p]]
+  (let [counts (->> p
+                    (partition-by identity)
+                    (map count))]
+    (cons s
+          (if (= L (first p))
+            (cons 0 counts)
+            counts))))
