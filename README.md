@@ -50,37 +50,48 @@ the sequence.
 -2/3
 ```
 
-Irrational numbers are infinite sequences of **SSB**. For example, the
-square root of two can be represented through `(1 ~R ~@(cycle [L L R
-R]))`. That means we start in the positive tree and descend right, and
-then continue infinitely descending left, left, right, right. The
-further we we climb down the tree, the more precise our value of the
-root.
+Irrational numbers are infinite sequences of **SSB**. For example, √2
+can be represented through `(1 ~R ~@(cycle [L L R R]))`. That means we
+start in the positive tree and descend right, and then continue
+infinitely descending left, left, right, right. The further we we climb
+down the tree, the more precise our value of the root.
 
 ```
-> (->> `(1 ~R ~@(cycle [L L R R]))
-       (take 42)
-       fmt)
-RLLRRLLRRLLRRLLRRLLRRLLRRLLRRLLRRLLRRLLRR
+> (let [s `(1 ~R ~@(cycle [L L R R]))]
+    (doseq [n (concat (range 2 10) (range 10 46 4))]
+      (println (format "%-41s %-17s %s"
+                       (fmt (take n s))
+                       (SSB->Q (take n s))
+                       (double (SSB->Q (take n s)))))))
 
-> (->> `(1 ~R ~@(cycle [L L R R]))
-       (take 42)
-       SSB->Q)
-77227930/54608393
-
-> (double *1)
-1.414213562373095
-
-> (Math/sqrt 2)
-1.4142135623730951
+R                                         2                 2.0
+RL                                        3/2               1.5
+RLL                                       4/3               1.333333333333333
+RLLR                                      7/5               1.4
+RLLRR                                     10/7              1.428571428571429
+RLLRRL                                    17/12             1.416666666666667
+RLLRRLL                                   24/17             1.411764705882353
+RLLRRLLR                                  41/29             1.413793103448276
+RLLRRLLRR                                 58/41             1.414634146341463
+RLLRRLLRRLLRR                             338/239           1.414225941422594
+RLLRRLLRRLLRRLLRR                         1970/1393         1.414213926776741
+RLLRRLLRRLLRRLLRRLLRR                     11482/8119        1.414213573100135
+RLLRRLLRRLLRRLLRRLLRRLLRR                 66922/47321       1.41421356268887
+RLLRRLLRRLLRRLLRRLLRRLLRRLLRR             390050/275807     1.414213562382391
+RLLRRLLRRLLRRLLRRLLRRLLRRLLRRLLRR         2273378/1607521   1.414213562373369
+RLLRRLLRRLLRRLLRRLLRRLLRRLLRRLLRRLLRR     13250218/9369319  1.414213562373103
+RLLRRLLRRLLRRLLRRLLRRLLRRLLRRLLRRLLRRLLRR 77227930/54608393 1.414213562373095
 ```
+
+The last decimal, 1.414213562373095, correctly represents the first 16
+decimal digits of √2.
 
 The arithmetic operations are `add`, `sub`, `mul` and `div` and behave
 like the ordinary arithmetic operations. The example shows how to add
-one to the square root of two.
+one to √2.
 
 ```
-> (->> (add (Q->SSB 1) `(1 ~R ~@(cycle [L L R R])))
+> (->> (add [1] `(1 ~R ~@(cycle [L L R R])))
        (take 42)
        SSB->Q
        double)
