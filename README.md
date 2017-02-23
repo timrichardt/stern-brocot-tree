@@ -64,6 +64,8 @@ down the tree, the more precise our value of the root.
                        (SSB->Q (take n s))
                        (double (SSB->Q (take n s)))))))
 
+Stern-Brocot sequence                     Rational          Decimal
+-----------------------------------------------------------------------------
 R                                         2                 2.0
 RL                                        3/2               1.5
 RLL                                       4/3               1.333333333333333

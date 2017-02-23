@@ -96,14 +96,14 @@
              [0]
 
              (pos? sign)
-             (if (pos? (+ a' b'))
-               (cons 1 (hom-emit H' u'))
-               (cons 1 (hom-emit [(- a') (- b') (- c') (- d')] u')))
+             (cons 1 (hom-emit (if (pos? (+ a' b'))
+                                 H'
+                                 [(- a') (- b') (- c') (- d')]) u'))
 
-             :otherwise
-             (if (pos? (+ a' b'))
-               (cons -1 (hom-emit [a' b' (- c') (- d')] u'))
-               (cons -1 (hom-emit [(- a') (- b') c' d'] u'))))))))
+             (neg? sign)
+             (cons -1 (hom-emit (if (pos? (+ a' b'))
+                                  [a' b' (- c') (- d')]
+                                  [(- a') (- b') c' d']) u')))))))
 
 (defn hom
   "Given a homographic map and a sequence of SSB, emits the
