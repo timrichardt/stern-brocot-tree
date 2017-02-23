@@ -211,18 +211,16 @@
                  [0]
 
                  (= s 1)
-                 (cond (pos? (+ a' b' c' d'))
-                       (cons 1 (bihom-emit B' u' v'))
-
-                       :otherwise
-                       (cons 1 (bihom-emit (Bs- B') u' v')))
+                 (cons 1 (bihom-emit (if (pos? (+ a' b' c' d'))
+                                       B'
+                                       (Bs- B'))
+                                     u' v'))
 
                  (= s -1)
-                 (cond (pos? (+ a' b' c' d'))
-                       (cons -1 (bihom-emit (Bu- B') u' v'))
-
-                       :otherwise
-                       (cons -1 (bihom-emit (Bv- B') u' v'))))))))
+                 (cons -1 (bihom-emit (if (pos? (+ a' b' c' d'))
+                                        (Bu- B')
+                                        (Bv- B'))
+                                      u' v')))))))
 
 (defn bihom
   [[a b c d
