@@ -93,15 +93,3 @@
 
             (lt u cc)
             (cons L (sqrt u (conj (vec r) L))))))))
-
-(defn SSB->CF
-  "Given a sequence of SSB, returns the continued fraction
-  representation of the sequence."
-  [[s & p]]
-  (let [counts (->> p
-                    (partition-by identity)
-                    (map count))]
-    (cons s
-          (if (= L (first p))
-            (cons 0 counts)
-            counts))))
