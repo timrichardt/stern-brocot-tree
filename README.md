@@ -35,8 +35,8 @@ Inside a project, reuquire the following functions.
 > (require '(stern-brocot [arithmetic :refer [add sub mul div]]))
 ```
 
-`Q->SSB` converts a rational number to it's **SSB** representation and
-`SSB->Q` is it's inverse. `fmt` prints a human readble representation of
+`Q->SSB` converts a rational number to its **SSB** representation and
+`SSB->Q` is its inverse. `fmt` prints a human readble representation of
 the sequence.
 
 ```
