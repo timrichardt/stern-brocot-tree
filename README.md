@@ -8,7 +8,7 @@ number. Irrational numbers can be represented as infinite lazy sequences on
 the trees [3]. 
 
 The **SSB** is related to representation of numbers as continued
-fractions and in 1978 Bill Gosper presented an algorithm for arithmetics
+fractions and in 1972 Bill Gosper found an algorithm for arithmetics
 on continued fractions [1]. In 2007, Milad Niqui published a work that
 generalizes Bill Gospers algorithm onto sequences of **SSB** [3]. The
 Clojure implementation here, with some exceptions, closely resembles
