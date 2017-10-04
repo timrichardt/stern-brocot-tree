@@ -1,3 +1,5 @@
+[![CircleCI](https://circleci.com/gh/timrichardt/stern-brocot-tree.svg?style=svg)](https://circleci.com/gh/timrichardt/stern-brocot-tree)
+
 # Lazy arithmetics on the Stern-Brocot tree
 ![In this figure, the first three levels of the Stern-Brocot tree are drawn.](https://raw.githubusercontent.com/timrichardt/stern-brocot-tree/master/resources/first_three_levels_of_SSB.png)
 
