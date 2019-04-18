@@ -35,7 +35,7 @@
 (defn SB->Q
   "Given a sequence of SB, returns the corresponding element of Q+."
   [u]
-  (node->Q (reduce (fn [n b] (b n)) I (vec u))))
+  (node->Q (reduce (fn [n b] (b n)) I u)))
 
 (defn Q->SB
   "Given a positive rational number, returns the corresponding element
