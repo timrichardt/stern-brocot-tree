@@ -105,3 +105,23 @@
           (if (= L (first p))
             (cons 0 counts)
             counts))))
+(defn flip
+  [dir]
+  (if (= dir R) L R))
+
+(defn log
+  "Shank's logarithm for integers `a` and `b`."
+  ([a b] (cond
+           (= a b)
+           []
+
+           (< a b)
+           (log a b 0 L)
+
+           :else
+           (log a b 0 R)))
+  ([a b n dir]
+   (lazy-seq
+    (if (< (Math/pow a (inc n)) b)
+      (cons dir (log a b (inc n) dir))
+      (log (/ b (Math/pow a n)) a 0 (flip dir))))))
