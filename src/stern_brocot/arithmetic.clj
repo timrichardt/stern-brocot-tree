@@ -282,6 +282,25 @@
   [dir]
   (if (= dir R) L R))
 
+(defn pow
+  ([base exponent]
+   (pow base (rest exponent) [1] R))
+  ([b e mem dir]
+   (let [[e & es] e]
+     (lazy-seq
+      (cond (= e R)
+            (concat (repeat (SSB->Q mem) dir) (pow (add b mem) es (concat mem (repeat (SSB->Q mem) dir)) dir))
+
+            (= e L)
+            (concat (repeat (SSB->Q mem) dir) (pow (add mem b) es (concat mem (repeat (SSB->Q mem) (flip dir))) (flip dir)))
+
+            :else
+            (repeat (SSB->Q mem) dir))))))
+
+(let [x (pow [1 R] [1 R R])]
+  [(SB->Q x)
+   (fmt x)])
+
 (defn log
   "Shank's logarithm for integers `a` and `b`."
   ([b a] (cond
@@ -292,9 +311,9 @@
            [0]
 
            (< a b)
-           (cons 1 (log a b 0 R))
+           (cons 1 (log b a 0 R))
 
-           "else"
+           :else
            (cons 1 (log a b 0 L))))
   ([a b n dir]
    (lazy-seq
@@ -329,7 +348,7 @@
 
   (count pi))
 
-(double (SSB->Q (take 100 (log 2 8))))
+(double (SSB->Q (log 2 3)))
 
 (defn inspect
   [x]
@@ -346,7 +365,7 @@
         ls (Q->SSB l)]
     (div
      (sub (mul es (log 2 e))
-          (add (mul rs (log 2 r)) (mul ls (log 2 l))))
+          (add (mul rs (log 2M r)) (mul ls (log 2M l))))
      es)))
 
 #_(div
@@ -354,11 +373,12 @@
         (add (mul [1 L] [1 R]) (mul [1 L] [1 R])))
    [1 R R R])
 
-(energy [1 R R R])
+(fmt (log 2 10))
+(double (SSB->Q (log 10 2)))
 
 (comment
-  (let [x (take 40 (entropy (take 1000 pi)))]
-    [(fmt x)
+  (let [x (entropy (take 20 phi))]
+    [(count (fmt x))
      (double (SSB->Q x))]))
 
 ;; (take 10 (entropy [R R R L]))
