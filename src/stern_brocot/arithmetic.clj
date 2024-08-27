@@ -302,6 +302,7 @@
    (fmt x)])
 
 (defn log
+(defn shanks-log
   "Shank's logarithm for integers `a` and `b`."
   ([b a] (cond
            (= a b)
@@ -311,20 +312,34 @@
            [0]
 
            (< a b)
-           (cons 1 (log b a 0 R))
+           (cons 1 (shanks-log b a 0 R))
 
            :else
-           (cons 1 (log a b 0 L))))
+           (cons 1 (shanks-log a b 0 L))))
   ([a b n dir]
    (lazy-seq
     (cond (< (Math/pow a (inc n)) b)
-          (cons dir (log a b (inc n) dir))
+          (cons dir (shanks-log a b (inc n) dir))
 
           (> (Math/pow a (inc n)) b)
-          (log (/ b (Math/pow a n)) a 0 (flip dir))
+          (shanks-log (/ b (Math/pow a n)) a 0 (flip dir))
 
           :else
           nil))))
+
+(defn log
+  [b a]
+  (let [I [1 0 0 1]
+        [a-sign & as] a
+        [b-sign & bs] b
+        [aa ab ac ad] (reduce (fn [n b] (b n)) I as)
+        [ba bb bc bd] (reduce (fn [n b] (b n)) I bs)
+        [x y] [(+ aa ab) (+ ac ad)]
+        [n d] [(+ ba bb) (+ bc bd)]]
+    (div (sub [1] (shanks-log x y))
+         (sub (shanks-log x n) (shanks-log x d)))))
+
+(fmt (log [1 R R R R R R R R R] [1 R L]))
 
 (comment
   (double (SSB->Q sqrt2))
