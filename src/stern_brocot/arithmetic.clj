@@ -336,10 +336,14 @@
         [ba bb bc bd] (reduce (fn [n b] (b n)) I bs)
         [x y] [(+ aa ab) (+ ac ad)]
         [n d] [(+ ba bb) (+ bc bd)]]
-    (div (sub [1] (shanks-log x y))
-         (sub (shanks-log x n) (shanks-log x d)))))
+    (cond (= x 1)
+          (div [1] (sub (shanks-log y d) (shanks-log y n)))
 
-(fmt (log [1 R R R R R R R R R] [1 R L]))
+          :else
+          (div (sub [1] (shanks-log x y))
+               (sub (shanks-log x n) (shanks-log x d))))))
+
+(double (SSB->Q (log [1 R R R R R R R R R] [1 R R R R R R])))
 
 (comment
   (double (SSB->Q sqrt2))
