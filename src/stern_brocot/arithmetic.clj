@@ -215,7 +215,6 @@
         (.write w (str a "," b "\n"))))))
 
 (comment
-
   (let [rnums (map SB->Q nums)]
     (reductions (fn [acc next]
                   (if (empty? acc)
@@ -242,33 +241,6 @@
                        [(repeat nr R)
                         (repeat nl L)]))
              (apply concat))))
-
-(defn energy
-  [s]
-  (dec (count s)))
-
-(defn entropy-old
-  [s]
-  (let [e (energy s)
-        nr (->> s (filter #{R}) count)
-        nl (->> s (filter #{L}) count)]
-    (cond (zero? e)
-          0
-
-          (zero? nr)
-          0
-
-          (zero? nl)
-          0
-
-          :else
-          (- (/ (+ (* (/ nr e) (Math/log (/ nr e)))
-                   (* (/ nl e) (Math/log (/ nl e))))
-                (Math/log 2))))))
-
-(defn safe-log
-  [x]
-  (if (zero? x) 0 (Math/log x)))
 
 (def phi (into [1] (comp
                     (take 10000)
@@ -440,33 +412,6 @@
         :else
         (SB>= a b)))
 
-(defn llog
-  ([a b]
-   (cond (SSB= a b)
-         [1]
-
-         (SSB< a b)
-         (if (SSB<= a [1])
-           (div [1] (sub [1] (cons 1 (llog (div [1] a) b [1] L))))
-           ;; (cons -1 (llog (div [1] a) b [1] L))
-           (cons 1 (llog a b [1] R)))
-
-         :else
-         (if (SSB<= b [1])
-           (cons -1 (llog a (div [1] b) [1] L))
-           (cons 1 (llog b a [1] R)))))
-  ([a b mem dir]
-   (let [next-mem (mul a mem)]
-     (lazy-seq
-      (cond (SSB< next-mem b)
-            (cons dir (llog a b next-mem dir))
-
-            (SSB> next-mem b)
-            (llog (div b next-mem) a [1] (flip dir))
-
-            :else
-            nil)))))
-
 (defn SB-invert
   [a]
   (map {L R R L} a))
@@ -512,19 +457,19 @@
                    (cons -1 (llog a b-inv [1] R))
                    (cons -1 (llog b-inv a [1] L))))
 
-               :else
+               (SSB> b [1])
                (if (SSB< a b)
                  (cons 1 (llog a b [1] R))
                  (cons 1 (llog b a [1] L))))))
   ([a b mem dir]
    (let [next-mem (mul mem a)]
-     (println
-      (str "Called with:\n"
-           "a:        " (SSB-str a) "\n"
-           "b:        " (SSB-str b) "\n"
-           "mem:      " (SSB-str mem) "\n"
-           "next-mem: " (SSB-str next-mem) "\n"
-           "dir:      " (fmt [dir]) "\n"))
+     #_(println
+        (str "Called with:\n"
+             "a:        " (SSB-str a) "\n"
+             "b:        " (SSB-str b) "\n"
+             "mem:      " (SSB-str mem) "\n"
+             "next-mem: " (SSB-str next-mem) "\n"
+             "dir:      " (fmt [dir]) "\n"))
      (lazy-seq
       (cond (SSB< next-mem b)
             (cons dir (llog a b next-mem dir))
@@ -535,34 +480,44 @@
             :else
             nil)))))
 
-(comment
-  (let [a [1 L]
-        b [1 L L L]
-        x (take 20 (llog a b))]
-    (def y
-      [(double (SSB->Q (take 20 a)))
-       (SSB> a [1])
-       (double (SSB->Q (take 20 b)))
-       (SSB> b [1])
-       (double (SSB->Q x))
-       (fmt x)])
-    y))
+(defn negate
+  [[s & bs]]
+  (cons (- s) bs))
 
-(defn inspect
-  [x]
-  (let [y (take 20 x)]
-    (println (fmt y) " " (double (SSB->Q y)))))
+(defn invert
+  [[s & bs]]
+  (cons s (map flip bs)))
 
 (defn entropy
-  [s]
-  (let [e (energy s)
-        es (Q->SSB e)
-        r (->> s (filter #{R}) count)
-        rs (Q->SSB r)
-        l (->> s (filter #{L}) count)
-        ls (Q->SSB l)]
-    (div
-     (sub (mul es (shanks-log 2 e))
-          (add (mul rs (shanks-log 2M r)) (mul ls (shanks-log 2M l))))
-     es)))
+  [[s & bs :as b]]
+  (let [e (cons 1 (map (constantly R) (rest bs)))
+        r (div (sub (->> bs (filter #{R}) (cons 1)) [1]) e)
+        l (div (sub (->> bs (filter #{L}) (map flip) (cons 1)) [1]) e)]
+    (negate
+     (add
+      (mul (llog [1 R] r) r)
+      (mul (llog [1 R] l) l)))))
+
+(comment
+  (let [a [1 R R]
+        b [1 R L]
+        da (double (SSB->Q (take 20 a)))
+        db (double (SSB->Q (take 20 b)))
+        x (take 20 (entropy [1 R L L R]))
+        dx (double (SSB->Q x))]
+    (doall x)
+    (def l
+      [#_da
+       #_(SSB> a [1])
+       #_db
+       #_(SSB> b [1])
+       #_dx
+       #_(- (Math/pow da dx) db)
+
+       dx
+       (fmt x)
+       #_(->> (SSB->CF x)
+              (interpose ",")
+              (apply str))])
+    l))
 
