@@ -1,6 +1,7 @@
 (ns stern-brocot.arithmetic
   (:require [stern-brocot.tree :refer [L R
                                        SB->N
+                                       node->Q
                                        SSB->Q
                                        SB->Q
                                        Q->SSB
@@ -282,31 +283,14 @@
   [dir]
   (if (= dir R) L R))
 
-(defn pow
-  ([base exponent]
-   (pow base (rest exponent) [1] R))
-  ([b e mem dir]
-   (let [[e & es] e]
-     (lazy-seq
-      (cond (= e R)
-            (concat (repeat (SSB->Q mem) dir) (pow (add b mem) es (concat mem (repeat (SSB->Q mem) dir)) dir))
-
-            (= e L)
-            (concat (repeat (SSB->Q mem) dir) (pow (add mem b) es (concat mem (repeat (SSB->Q mem) (flip dir))) (flip dir)))
-
-            :else
-            (repeat (SSB->Q mem) dir))))))
-
-(let [x (pow [1 R] [1 R R])]
-  [(SB->Q x)
-   (fmt x)])
-
-(defn log
 (defn shanks-log
   "Shank's logarithm for integers `a` and `b`."
   ([b a] (cond
            (= a b)
            [1]
+
+           (= b 1)
+           (cons 1 (cycle [R]))
 
            (= a 1)
            [0]
@@ -327,47 +311,148 @@
           :else
           nil))))
 
-(defn log
-  [b a]
-  (let [I [1 0 0 1]
-        [a-sign & as] a
-        [b-sign & bs] b
-        [aa ab ac ad] (reduce (fn [n b] (b n)) I as)
-        [ba bb bc bd] (reduce (fn [n b] (b n)) I bs)
-        [x y] [(+ aa ab) (+ ac ad)]
-        [n d] [(+ ba bb) (+ bc bd)]]
-    (cond (= x 1)
-          (div [1] (sub (shanks-log y d) (shanks-log y n)))
+(defn SB=
+  [[a & as] [b & bs]]
+  (cond (not (or a b))
+        true
 
-          :else
-          (div (sub [1] (shanks-log x y))
-               (sub (shanks-log x n) (shanks-log x d))))))
+        (not (= a b))
+        false
 
-(double (SSB->Q (log [1 R R R R R R R R R] [1 R R R R R R])))
+        :else
+        (recur as bs)))
 
-(comment
-  (double (SSB->Q sqrt2))
+(defn SB>
+  [[a & as] [b & bs]]
+  (cond (not (or a b))
+        false
 
-  (entropy-old (take 100 sqrt2))
-  (entropy-old (take 100 phi))
+        (not a)
+        (= b L)
 
-  (take 2 phi)
+        (not b)
+        (= a R)
 
-  (with-open [w (io/writer "/home/timr/sqrt2_entropy.dat")]
-    (doseq [k (range 1 80000)]
-      (.write w (str k
-                     " "
-                     (->> (take k sqrt2)
-                          entropy-old)
-                     "\n"))))
+        :else
+        (recur as bs)))
 
-  (conj [1 2 3] 3)
+(defn SB<
+  [[a & as] [b & bs]]
+  (cond (not (or a b))
+        false
 
-  (take-nth 2)
+        (not a)
+        (= b R)
 
-  (count pi))
+        (not b)
+        (= a L)
 
-(double (SSB->Q (log 2 3)))
+        :else
+        (recur as bs)))
+
+(defn SB<=
+  [[a & as] [b & bs]]
+  (cond (not (or a b))
+        true
+
+        (not a)
+        (= b R)
+
+        (not b)
+        (= a L)
+
+        :else
+        (recur as bs)))
+
+(defn SB>=
+  [[a & as] [b & bs]]
+  (cond (not (or a b))
+        true
+
+        (not a)
+        (= b L)
+
+        (not b)
+        (= a R)
+
+        :else
+        (recur as bs)))
+
+(defn SSB=
+  [[sa & a] [sb & b]]
+  (if (= sa sb)
+    (SB= a b)
+    false))
+
+(defn SSB<
+  [[sa & a] [sb & b]]
+  (cond (< sa sb)
+        true
+
+        (> sa sb)
+        false
+
+        :else
+        (SB< a b)))
+
+(defn SSB>
+  [[sa & a] [sb & b]]
+  (cond (< sa sb)
+        false
+
+        (> sa sb)
+        true
+
+        :else
+        (SB> a b)))
+
+(defn SSB<=
+  [[sa & a] [sb & b]]
+  (cond (< sa sb)
+        true
+
+        (> sa sb)
+        false
+
+        :else
+        (SB<= a b)))
+
+(defn SSB>=
+  [[sa & a] [sb & b]]
+  (cond (< sa sb)
+        false
+
+        (> sa sb)
+        true
+
+        :else
+        (SB>= a b)))
+
+(defn llog
+  ([a b]
+   (cond (SSB= a b)
+         [1]
+
+         (SSB< a b)
+         (llog b a [1] L)
+
+         :else
+         (llog a b [1] R)))
+  ([a b mem dir]
+   (let [next-mem (mul mem a)]
+     (lazy-seq
+      (cond (SSB< next-mem b)
+            (cons dir (llog a b next-mem dir))
+
+            (SSB> next-mem b)
+            (llog (div b mem) a [1] (flip dir))
+
+            :else
+            nil)))))
+
+(let [x (take 30 (llog [1 L] [1 R R R R R R R]))]
+  [(double (SB->Q x))
+   (fmt x)])
 
 (defn inspect
   [x]
@@ -383,23 +468,7 @@
         l (->> s (filter #{L}) count)
         ls (Q->SSB l)]
     (div
-     (sub (mul es (log 2 e))
-          (add (mul rs (log 2M r)) (mul ls (log 2M l))))
+     (sub (mul es (shanks-log 2 e))
+          (add (mul rs (shanks-log 2M r)) (mul ls (shanks-log 2M l))))
      es)))
-
-#_(div
-   (sub (mul [1] [1 R R])
-        (add (mul [1 L] [1 R]) (mul [1 L] [1 R])))
-   [1 R R R])
-
-(fmt (log 2 10))
-(double (SSB->Q (log 10 2)))
-
-(comment
-  (let [x (entropy (take 20 phi))]
-    [(count (fmt x))
-     (double (SSB->Q x))]))
-
-;; (take 10 (entropy [R R R L]))
-
 
