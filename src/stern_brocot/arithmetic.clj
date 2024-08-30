@@ -285,7 +285,7 @@
 
 (defn shanks-log
   "Shank's logarithm for integers `a` and `b`."
-  ([b a] (cond
+  ([a b] (cond
            (= a b)
            [1]
 
@@ -296,10 +296,10 @@
            [0]
 
            (< a b)
-           (cons 1 (shanks-log b a 0 R))
+           (cons 1 (shanks-log a b 0 R))
 
            :else
-           (cons 1 (shanks-log a b 0 L))))
+           (cons 1 (shanks-log b a 0 L))))
   ([a b n dir]
    (lazy-seq
     (cond (< (Math/pow a (inc n)) b)
@@ -434,12 +434,84 @@
          [1]
 
          (SSB< a b)
-         (llog b a [1] L)
+         (if (SSB<= a [1])
+           (div [1] (sub [1] (cons 1 (llog (div [1] a) b [1] L))))
+           ;; (cons -1 (llog (div [1] a) b [1] L))
+           (cons 1 (llog a b [1] R)))
 
          :else
-         (llog a b [1] R)))
+         (if (SSB<= b [1])
+           (cons -1 (llog a (div [1] b) [1] L))
+           (cons 1 (llog b a [1] R)))))
+  ([a b mem dir]
+   (let [next-mem (mul a mem)]
+     (lazy-seq
+      (cond (SSB< next-mem b)
+            (cons dir (llog a b next-mem dir))
+
+            (SSB> next-mem b)
+            (llog (div b next-mem) a [1] (flip dir))
+
+            :else
+            nil)))))
+
+(defn SB-invert
+  [a]
+  (map {L R R L} a))
+
+(defn SSB-invert
+  [[s & a]]
+  (cons s (SB-invert a)))
+
+(defn SSB-str
+  [a]
+  (let [y (take 40 a)]
+    (format "%40s %f" (fmt y) (double (SSB->Q y)))))
+
+(defn llog
+  ([a b]
+   (cond (SSB= a b)
+         [1]
+
+         (SSB= a [1])
+         (cons 1 (cycle [R]))
+
+         (SSB= b [1])
+         [0]
+
+         (SSB< a [1])
+         (cond (SSB< b [1])
+               (let [a-inv (SSB-invert a)
+                     b-inv (SSB-invert b)]
+                 (if (SSB< a-inv b-inv)
+                   (cons -1 (llog a-inv b-inv [1] R))
+                   (cons 1 (llog b-inv a-inv [1] L))))
+
+               :else
+               (let [a-inv (SSB-invert a)]
+                 (if (SSB< a-inv b)
+                   (cons -1 (llog a-inv b [1] R))
+                   (cons 1 (llog b a-inv [1] L)))))
+
+         (SSB> a [1])
+         (cond (SSB< b [1])
+               (let [b-inv (SSB-invert b)]
+                 (if (SSB< a b-inv)
+                   (cons -1 (llog a b-inv [1] R))
+                   (cons -1 (llog b-inv a [1] L))))
+
+               :else
+               (if (SSB< a b)
+                 (cons 1 (llog a b [1] R))
+                 (cons 1 (llog b a [1] L))))))
   ([a b mem dir]
    (let [next-mem (mul mem a)]
+     (println (str "Called with:\n"
+                   "a:        " (SSB-str a) "\n"
+                   "b:        " (SSB-str b) "\n"
+                   "mem:      " (SSB-str mem) "\n"
+                   "next-mem: " (SSB-str next-mem) "\n"
+                   "dir:      " (fmt [dir]) "\n"))
      (lazy-seq
       (cond (SSB< next-mem b)
             (cons dir (llog a b next-mem dir))
@@ -450,9 +522,18 @@
             :else
             nil)))))
 
-(let [x (take 30 (llog [1 L] [1 R R R R R R R]))]
-  [(double (SB->Q x))
-   (fmt x)])
+(comment
+  (let [a [1 R]
+        b [1 R L L]
+        x (take 40 (llog a b))]
+    (def y
+      [(double (SSB->Q (take 20 a)))
+       (SSB> a [1])
+       (double (SSB->Q (take 20 b)))
+       (SSB> b [1])
+       (double (SSB->Q x))
+       (fmt x)])
+    y))
 
 (defn inspect
   [x]
