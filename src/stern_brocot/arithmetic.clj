@@ -333,6 +333,9 @@
         (not b)
         (= a R)
 
+        (not (= a b))
+        (= b L)
+
         :else
         (recur as bs)))
 
@@ -346,6 +349,9 @@
 
         (not b)
         (= a L)
+
+        (not (= a b))
+        (= b R)
 
         :else
         (recur as bs)))
@@ -361,6 +367,9 @@
         (not b)
         (= a L)
 
+        (not (= a b))
+        (= b R)
+
         :else
         (recur as bs)))
 
@@ -374,6 +383,9 @@
 
         (not b)
         (= a R)
+
+        (not (= a b))
+        (= b L)
 
         :else
         (recur as bs)))
@@ -484,14 +496,14 @@
                (let [a-inv (SSB-invert a)
                      b-inv (SSB-invert b)]
                  (if (SSB< a-inv b-inv)
-                   (cons -1 (llog a-inv b-inv [1] R))
+                   (cons 1 (llog a-inv b-inv [1] R))
                    (cons 1 (llog b-inv a-inv [1] L))))
 
-               :else
+               (SSB> b [1])
                (let [a-inv (SSB-invert a)]
                  (if (SSB< a-inv b)
                    (cons -1 (llog a-inv b [1] R))
-                   (cons 1 (llog b a-inv [1] L)))))
+                   (cons -1 (llog b a-inv [1] L)))))
 
          (SSB> a [1])
          (cond (SSB< b [1])
@@ -506,12 +518,13 @@
                  (cons 1 (llog b a [1] L))))))
   ([a b mem dir]
    (let [next-mem (mul mem a)]
-     (println (str "Called with:\n"
-                   "a:        " (SSB-str a) "\n"
-                   "b:        " (SSB-str b) "\n"
-                   "mem:      " (SSB-str mem) "\n"
-                   "next-mem: " (SSB-str next-mem) "\n"
-                   "dir:      " (fmt [dir]) "\n"))
+     (println
+      (str "Called with:\n"
+           "a:        " (SSB-str a) "\n"
+           "b:        " (SSB-str b) "\n"
+           "mem:      " (SSB-str mem) "\n"
+           "next-mem: " (SSB-str next-mem) "\n"
+           "dir:      " (fmt [dir]) "\n"))
      (lazy-seq
       (cond (SSB< next-mem b)
             (cons dir (llog a b next-mem dir))
@@ -523,9 +536,9 @@
             nil)))))
 
 (comment
-  (let [a [1 R]
-        b [1 R L L]
-        x (take 40 (llog a b))]
+  (let [a [1 L]
+        b [1 L L L]
+        x (take 20 (llog a b))]
     (def y
       [(double (SSB->Q (take 20 a)))
        (SSB> a [1])
