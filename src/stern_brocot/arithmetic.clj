@@ -5,10 +5,12 @@
                                        SSB->Q
                                        SB->Q
                                        Q->SSB
+                                       flip
+                                       invert
+                                       negate
                                        fmt]]
-            stern-brocot.pi
-            [stern-brocot.bihomographic :refer [bihom]]
-            [clojure.java.io :as io]))
+
+            [stern-brocot.bihomographic :refer [bihom]]))
 
 (defn add
   "Given two or more lazy sequences of SSB, returns the lazy sequence of
@@ -110,178 +112,6 @@
           (if (= L (first p))
             (cons 0 counts)
             counts))))
-
-(defn combs
-  [acc n]
-  (if (pos? n)
-    (recur (mapcat (fn [x]
-                     [(conj x L)
-                      (conj x R)])
-                   acc)
-           (dec n))
-    acc))
-
-(map fmt (mapcat #(combs [[]] %) (range 7)))
-
-(defn combs2
-  [n]
-  (if (pos? n)
-    (mapcat (fn [x]
-              [(conj x L)
-               (conj x R)])
-            (combs2 (dec n)))
-    [[]]))
-
-(defn combs2
-  [n]
-  (if (pos? n)
-    (mapcat (fn [x]
-              [(conj x L)
-               (conj x R)])
-            (combs2 (dec n)))
-    [[]]))
-
-#_(sort (map SB->Q (mapcat #(combs2 %) (range 10))))
-
-(defn num->pt
-  [num]
-  (format "<circle cx=\"%f\" cy=\"%f\" r=\"%f\" />"
-          (/ 1 (double (SB->Q num)))
-          1.0 #_(double (SB->Q num))
-          #_(Math/exp (/ (double (SB->Q num)) (count num)))
-          (/ 0.05 (inc (count (drop-while #{R} num)))) #_(- (double (SB->Q num)) (Math/floor (double (SB->Q num))))))
-
-{:id 1
- :value []
- :children nil}
-
-(defn nodes
-  [k ns]
-  (if (zero? k)
-    ns
-    (concat ns
-            (nodes (dec k)
-                   (mapcat (fn [x] [(conj x L)
-                                    (conj x R)])
-                           ns)))))
-
-(comment
-  ;; should work with a sane number system, doesn't work in clj, prolly not in any envinronment
-  (defn bin
-    [ns nbins]
-    (let [max-n (apply max ns)
-          dn (/ max-n nbins)]
-      (partition-by #(mod % dn) ns))))
-
-(defn bin*
-  [ns nm bin-size]
-  (let [[a b] (split-with #(< % nm) ns)]
-    (lazy-cat [a] (bin* b (+ nm bin-size) bin-size))))
-
-(defn bin
-  [ns bin-size]
-  (bin* ns bin-size bin-size))
-
-#_(take 10 (bin (range 10) 1.0))
-
-#_(SB->N [R L R L R])
-
-(comment
-  (def nums
-    (->> (nodes 15 [[]])
-         (filter #(< (count (drop-while #{R} %)) 4))
-         (sort-by SB->Q))))
-
-(comment
-  (def NS
-    (nodes 22 [[]]))
-
-  (def NSQ
-    (sort (map SB->Q NS))))
-
-(comment
-  (let [k 22
-        d 0.3
-        f (map count (take (Math/ceil (/ k d)) (bin NSQ d)))
-        m (apply max f)]
-    #_(map #(/ (Math/log %1) (Math/log %2)) f (rest f))
-    #_(map (fn [x]
-             (apply str (repeat (/ (* 120 x) m) "|")))
-           f)
-    (with-open [w (clojure.java.io/writer "/home/timr/foo-02.csv")]
-      (doseq [[a b] (map-indexed (fn [a b]
-                                   [(* d a) b])
-                                 f)]
-        (.write w (str a "," b "\n"))))))
-
-(comment
-  (let [rnums (map SB->Q nums)]
-    (reductions (fn [acc next]
-                  (if (empty? acc)
-                    [0]
-                    [next]))
-                []
-                rnums))
-
-  (time
-   (with-open [w (io/writer "/home/timr/foo.svg")]
-     (spit w
-           (format "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 10 10\">%s</svg>"
-                   (->> nums
-                        (map num->pt)
-                        (apply str)))))))
-
-(def pi
-  (into [1]
-        (->> stern-brocot.pi/pi-cf
-             rest
-             (take-nth 2)
-             (partition 2)
-             (mapcat (fn [[nr nl]]
-                       [(repeat nr R)
-                        (repeat nl L)]))
-             (apply concat))))
-
-(def phi (into [1] (comp
-                    (take 10000)
-                    (mapcat identity))
-               (repeat [R L])))
-
-(def sqrt2 (into [1 R] (apply concat (repeat 50000 [L L R R]))))
-
-(def sqrt3 (into [1 R] (apply concat (repeat 80000 [L R R]))))
-
-(defn flip
-  [dir]
-  (if (= dir R) L R))
-
-(defn shanks-log
-  "Shank's logarithm for integers `a` and `b`."
-  ([a b] (cond
-           (= a b)
-           [1]
-
-           (= b 1)
-           (cons 1 (cycle [R]))
-
-           (= a 1)
-           [0]
-
-           (< a b)
-           (cons 1 (shanks-log a b 0 R))
-
-           :else
-           (cons 1 (shanks-log b a 0 L))))
-  ([a b n dir]
-   (lazy-seq
-    (cond (< (Math/pow a (inc n)) b)
-          (cons dir (shanks-log a b (inc n) dir))
-
-          (> (Math/pow a (inc n)) b)
-          (shanks-log (/ b (Math/pow a n)) a 0 (flip dir))
-
-          :else
-          nil))))
 
 (defn SB=
   [[a & as] [b & bs]]
@@ -412,20 +242,7 @@
         :else
         (SB>= a b)))
 
-(defn SB-invert
-  [a]
-  (map {L R R L} a))
-
-(defn SSB-invert
-  [[s & a]]
-  (cons s (SB-invert a)))
-
-(defn SSB-str
-  [a]
-  (let [y (take 40 a)]
-    (format "%40s %f" (fmt y) (double (SSB->Q y)))))
-
-(defn llog
+(defn log
   ([a b]
    (cond (SSB= a b)
          [1]
@@ -438,29 +255,29 @@
 
          (SSB< a [1])
          (cond (SSB< b [1])
-               (let [a-inv (SSB-invert a)
-                     b-inv (SSB-invert b)]
+               (let [a-inv (invert a)
+                     b-inv (invert b)]
                  (if (SSB< a-inv b-inv)
-                   (cons 1 (llog a-inv b-inv [1] R))
-                   (cons 1 (llog b-inv a-inv [1] L))))
+                   (cons 1 (log a-inv b-inv [1] R))
+                   (cons 1 (log b-inv a-inv [1] L))))
 
                (SSB> b [1])
-               (let [a-inv (SSB-invert a)]
+               (let [a-inv (invert a)]
                  (if (SSB< a-inv b)
-                   (cons -1 (llog a-inv b [1] R))
-                   (cons -1 (llog b a-inv [1] L)))))
+                   (cons -1 (log a-inv b [1] R))
+                   (cons -1 (log b a-inv [1] L)))))
 
          (SSB> a [1])
          (cond (SSB< b [1])
-               (let [b-inv (SSB-invert b)]
+               (let [b-inv (invert b)]
                  (if (SSB< a b-inv)
-                   (cons -1 (llog a b-inv [1] R))
-                   (cons -1 (llog b-inv a [1] L))))
+                   (cons -1 (log a b-inv [1] R))
+                   (cons -1 (log b-inv a [1] L))))
 
                (SSB> b [1])
                (if (SSB< a b)
-                 (cons 1 (llog a b [1] R))
-                 (cons 1 (llog b a [1] L))))))
+                 (cons 1 (log a b [1] R))
+                 (cons 1 (log b a [1] L))))))
   ([a b mem dir]
    (let [next-mem (mul mem a)]
      #_(println
@@ -472,21 +289,13 @@
              "dir:      " (fmt [dir]) "\n"))
      (lazy-seq
       (cond (SSB< next-mem b)
-            (cons dir (llog a b next-mem dir))
+            (cons dir (log a b next-mem dir))
 
             (SSB> next-mem b)
-            (llog (div b mem) a [1] (flip dir))
+            (log (div b mem) a [1] (flip dir))
 
             :else
             nil)))))
-
-(defn negate
-  [[s & bs]]
-  (cons (- s) bs))
-
-(defn invert
-  [[s & bs]]
-  (cons s (map flip bs)))
 
 (defn entropy
   [[s & bs :as b]]
@@ -495,29 +304,33 @@
         l (div (sub (->> bs (filter #{L}) (map flip) (cons 1)) [1]) e)]
     (negate
      (add
-      (mul (llog [1 R] r) r)
-      (mul (llog [1 R] l) l)))))
+      (mul (log [1 R] r) r)
+      (mul (log [1 R] l) l)))))
 
-(comment
-  (let [a [1 R R]
-        b [1 R L]
-        da (double (SSB->Q (take 20 a)))
-        db (double (SSB->Q (take 20 b)))
-        x (take 20 (entropy [1 R L L R]))
-        dx (double (SSB->Q x))]
-    (doall x)
-    (def l
-      [#_da
-       #_(SSB> a [1])
-       #_db
-       #_(SSB> b [1])
-       #_dx
-       #_(- (Math/pow da dx) db)
+(defn shanks-log
+  "Shank's logarithm for integers `a` and `b`."
+  ([a b] (cond
+           (= a b)
+           [1]
 
-       dx
-       (fmt x)
-       #_(->> (SSB->CF x)
-              (interpose ",")
-              (apply str))])
-    l))
+           (= b 1)
+           (cons 1 (cycle [R]))
 
+           (= a 1)
+           [0]
+
+           (< a b)
+           (cons 1 (shanks-log a b 0 R))
+
+           :else
+           (cons 1 (shanks-log b a 0 L))))
+  ([a b n dir]
+   (lazy-seq
+    (cond (< (Math/pow a (inc n)) b)
+          (cons dir (shanks-log a b (inc n) dir))
+
+          (> (Math/pow a (inc n)) b)
+          (shanks-log (/ b (Math/pow a n)) a 0 (flip dir))
+
+          :else
+          nil))))

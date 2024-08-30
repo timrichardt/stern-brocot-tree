@@ -1,4 +1,5 @@
-(ns stern-brocot.tree)
+(ns stern-brocot.tree
+  (:require [stern-brocot.pi]))
 
 ;; This file implements the core structure of the unsigned and signed
 ;; Stern-Brocot tree.
@@ -111,6 +112,29 @@
 
           :otherwise
           0)))
+
+(defn flip
+  [dir]
+  (if (= dir R) L R))
+
+(defn negate
+  [[s & bs]]
+  (cons (- s) bs))
+
+(defn invert
+  [[s & bs]]
+  (cons s (map flip bs)))
+
+(def pi
+  (into [1]
+        (->> stern-brocot.pi/pi-cf
+             rest
+             (take-nth 2)
+             (partition 2)
+             (mapcat (fn [[nr nl]]
+                       [(repeat nr R)
+                        (repeat nl L)]))
+             (apply concat))))
 
 (defn fmt
   [u]
