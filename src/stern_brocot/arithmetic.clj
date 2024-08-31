@@ -6,8 +6,8 @@
                                        SB->Q
                                        Q->SSB
                                        flip
-                                       invert
-                                       negate
+                                       inv
+                                       neg
                                        fmt]]
 
             [stern-brocot.bihomographic :refer [bihom]]))
@@ -112,6 +112,34 @@
           (if (= L (first p))
             (cons 0 counts)
             counts))))
+
+(defn shanks-log
+  "Shank's logarithm for integers `a` and `b`."
+  ([a b] (cond
+           (= a b)
+           [1]
+
+           (= b 1)
+           (cons 1 (cycle [R]))
+
+           (= a 1)
+           [0]
+
+           (< a b)
+           (cons 1 (shanks-log a b 0 R))
+
+           :else
+           (cons 1 (shanks-log b a 0 L))))
+  ([a b n dir]
+   (lazy-seq
+    (cond (< (Math/pow a (inc n)) b)
+          (cons dir (shanks-log a b (inc n) dir))
+
+          (> (Math/pow a (inc n)) b)
+          (shanks-log (/ b (Math/pow a n)) a 0 (flip dir))
+
+          :else
+          nil))))
 
 (defn SB=
   [[a & as] [b & bs]]
@@ -255,21 +283,21 @@
 
          (SSB< a [1])
          (cond (SSB< b [1])
-               (let [a-inv (invert a)
-                     b-inv (invert b)]
+               (let [a-inv (inv a)
+                     b-inv (inv b)]
                  (if (SSB< a-inv b-inv)
                    (cons 1 (log a-inv b-inv [1] R))
                    (cons 1 (log b-inv a-inv [1] L))))
 
                (SSB> b [1])
-               (let [a-inv (invert a)]
+               (let [a-inv (inv a)]
                  (if (SSB< a-inv b)
                    (cons -1 (log a-inv b [1] R))
                    (cons -1 (log b a-inv [1] L)))))
 
          (SSB> a [1])
          (cond (SSB< b [1])
-               (let [b-inv (invert b)]
+               (let [b-inv (inv b)]
                  (if (SSB< a b-inv)
                    (cons -1 (log a b-inv [1] R))
                    (cons -1 (log b-inv a [1] L))))
@@ -302,35 +330,7 @@
   (let [e (cons 1 (map (constantly R) (rest bs)))
         r (div (sub (->> bs (filter #{R}) (cons 1)) [1]) e)
         l (div (sub (->> bs (filter #{L}) (map flip) (cons 1)) [1]) e)]
-    (negate
+    (neg
      (add
       (mul (log [1 R] r) r)
       (mul (log [1 R] l) l)))))
-
-(defn shanks-log
-  "Shank's logarithm for integers `a` and `b`."
-  ([a b] (cond
-           (= a b)
-           [1]
-
-           (= b 1)
-           (cons 1 (cycle [R]))
-
-           (= a 1)
-           [0]
-
-           (< a b)
-           (cons 1 (shanks-log a b 0 R))
-
-           :else
-           (cons 1 (shanks-log b a 0 L))))
-  ([a b n dir]
-   (lazy-seq
-    (cond (< (Math/pow a (inc n)) b)
-          (cons dir (shanks-log a b (inc n) dir))
-
-          (> (Math/pow a (inc n)) b)
-          (shanks-log (/ b (Math/pow a n)) a 0 (flip dir))
-
-          :else
-          nil))))

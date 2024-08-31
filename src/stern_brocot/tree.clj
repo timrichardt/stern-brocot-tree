@@ -117,11 +117,11 @@
   [dir]
   (if (= dir R) L R))
 
-(defn negate
+(defn neg
   [[s & bs]]
   (cons (- s) bs))
 
-(defn invert
+(defn inv
   [[s & bs]]
   (cons s (map flip bs)))
 
