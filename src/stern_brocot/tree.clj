@@ -1,4 +1,5 @@
-(ns stern-brocot.tree)
+(ns stern-brocot.tree
+  (:require [stern-brocot.pi]))
 
 ;; This file implements the core structure of the unsigned and signed
 ;; Stern-Brocot tree.
@@ -25,6 +26,11 @@
   [[a b c d]]
   (/ (+ a b) (+ c d)))
 
+(defn node->N
+  "Given a node, returns the corresponding adic number."
+  [[a b c d]]
+  (* (+ a b) (+ c d)))
+
 ;; Any positive rational number r (element of Q+) can now be represented
 ;; as a sequential application of L and R on the root of the tree. The
 ;; set of all sequences is called SB. We represent a sequence of SB as a
@@ -36,6 +42,11 @@
   "Given a sequence of SB, returns the corresponding element of Q+."
   [u]
   (node->Q (reduce (fn [n b] (b n)) I u)))
+
+(defn SB->N
+  "Given a sequence of SB, returns the corresponding element of Q+."
+  [u]
+  (node->N (reduce (fn [n b] (b n)) I u)))
 
 (defn Q->SB
   "Given a positive rational number, returns the corresponding element
@@ -101,6 +112,29 @@
 
           :otherwise
           0)))
+
+(defn flip
+  [dir]
+  (if (= dir R) L R))
+
+(defn neg
+  [[s & bs]]
+  (cons (- s) bs))
+
+(defn inv
+  [[s & bs]]
+  (cons s (map flip bs)))
+
+(def pi
+  (into [1]
+        (->> stern-brocot.pi/pi-cf
+             rest
+             (take-nth 2)
+             (partition 2)
+             (mapcat (fn [[nr nl]]
+                       [(repeat nr R)
+                        (repeat nl L)]))
+             (apply concat))))
 
 (defn fmt
   [u]

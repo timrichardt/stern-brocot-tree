@@ -1,8 +1,15 @@
 (ns stern-brocot.arithmetic
   (:require [stern-brocot.tree :refer [L R
+                                       SB->N
+                                       node->Q
                                        SSB->Q
+                                       SB->Q
                                        Q->SSB
+                                       flip
+                                       inv
+                                       neg
                                        fmt]]
+
             [stern-brocot.bihomographic :refer [bihom]]))
 
 (defn add
@@ -105,23 +112,225 @@
           (if (= L (first p))
             (cons 0 counts)
             counts))))
-(defn flip
-  [dir]
-  (if (= dir R) L R))
 
-(defn log
+(defn shanks-log
   "Shank's logarithm for integers `a` and `b`."
   ([a b] (cond
            (= a b)
-           []
+           [1]
+
+           (= b 1)
+           (cons 1 (cycle [R]))
+
+           (= a 1)
+           [0]
 
            (< a b)
-           (log a b 0 L)
+           (cons 1 (shanks-log a b 0 R))
 
            :else
-           (log a b 0 R)))
+           (cons 1 (shanks-log b a 0 L))))
   ([a b n dir]
    (lazy-seq
-    (if (< (Math/pow a (inc n)) b)
-      (cons dir (log a b (inc n) dir))
-      (log (/ b (Math/pow a n)) a 0 (flip dir))))))
+    (cond (< (Math/pow a (inc n)) b)
+          (cons dir (shanks-log a b (inc n) dir))
+
+          (> (Math/pow a (inc n)) b)
+          (shanks-log (/ b (Math/pow a n)) a 0 (flip dir))
+
+          :else
+          nil))))
+
+(defn SB=
+  [[a & as] [b & bs]]
+  (cond (not (or a b))
+        true
+
+        (not (= a b))
+        false
+
+        :else
+        (recur as bs)))
+
+(defn SB>
+  [[a & as] [b & bs]]
+  (cond (not (or a b))
+        false
+
+        (not a)
+        (= b L)
+
+        (not b)
+        (= a R)
+
+        (not (= a b))
+        (= b L)
+
+        :else
+        (recur as bs)))
+
+(defn SB<
+  [[a & as] [b & bs]]
+  (cond (not (or a b))
+        false
+
+        (not a)
+        (= b R)
+
+        (not b)
+        (= a L)
+
+        (not (= a b))
+        (= b R)
+
+        :else
+        (recur as bs)))
+
+(defn SB<=
+  [[a & as] [b & bs]]
+  (cond (not (or a b))
+        true
+
+        (not a)
+        (= b R)
+
+        (not b)
+        (= a L)
+
+        (not (= a b))
+        (= b R)
+
+        :else
+        (recur as bs)))
+
+(defn SB>=
+  [[a & as] [b & bs]]
+  (cond (not (or a b))
+        true
+
+        (not a)
+        (= b L)
+
+        (not b)
+        (= a R)
+
+        (not (= a b))
+        (= b L)
+
+        :else
+        (recur as bs)))
+
+(defn SSB=
+  [[sa & a] [sb & b]]
+  (if (= sa sb)
+    (SB= a b)
+    false))
+
+(defn SSB<
+  [[sa & a] [sb & b]]
+  (cond (< sa sb)
+        true
+
+        (> sa sb)
+        false
+
+        :else
+        (SB< a b)))
+
+(defn SSB>
+  [[sa & a] [sb & b]]
+  (cond (< sa sb)
+        false
+
+        (> sa sb)
+        true
+
+        :else
+        (SB> a b)))
+
+(defn SSB<=
+  [[sa & a] [sb & b]]
+  (cond (< sa sb)
+        true
+
+        (> sa sb)
+        false
+
+        :else
+        (SB<= a b)))
+
+(defn SSB>=
+  [[sa & a] [sb & b]]
+  (cond (< sa sb)
+        false
+
+        (> sa sb)
+        true
+
+        :else
+        (SB>= a b)))
+
+(defn log
+  ([a b]
+   (cond (SSB= a b)
+         [1]
+
+         (SSB= a [1])
+         (cons 1 (cycle [R]))
+
+         (SSB= b [1])
+         [0]
+
+         (SSB< a [1])
+         (cond (SSB< b [1])
+               (let [a-inv (inv a)
+                     b-inv (inv b)]
+                 (if (SSB< a-inv b-inv)
+                   (cons 1 (log a-inv b-inv [1] R))
+                   (cons 1 (log b-inv a-inv [1] L))))
+
+               (SSB> b [1])
+               (let [a-inv (inv a)]
+                 (if (SSB< a-inv b)
+                   (cons -1 (log a-inv b [1] R))
+                   (cons -1 (log b a-inv [1] L)))))
+
+         (SSB> a [1])
+         (cond (SSB< b [1])
+               (let [b-inv (inv b)]
+                 (if (SSB< a b-inv)
+                   (cons -1 (log a b-inv [1] R))
+                   (cons -1 (log b-inv a [1] L))))
+
+               (SSB> b [1])
+               (if (SSB< a b)
+                 (cons 1 (log a b [1] R))
+                 (cons 1 (log b a [1] L))))))
+  ([a b mem dir]
+   (let [next-mem (mul mem a)]
+     #_(println
+        (str "Called with:\n"
+             "a:        " (SSB-str a) "\n"
+             "b:        " (SSB-str b) "\n"
+             "mem:      " (SSB-str mem) "\n"
+             "next-mem: " (SSB-str next-mem) "\n"
+             "dir:      " (fmt [dir]) "\n"))
+     (lazy-seq
+      (cond (SSB< next-mem b)
+            (cons dir (log a b next-mem dir))
+
+            (SSB> next-mem b)
+            (log (div b mem) a [1] (flip dir))
+
+            :else
+            nil)))))
+
+(defn entropy
+  [[s & bs :as b]]
+  (let [e (cons 1 (map (constantly R) (rest bs)))
+        r (div (sub (->> bs (filter #{R}) (cons 1)) [1]) e)
+        l (div (sub (->> bs (filter #{L}) (map flip) (cons 1)) [1]) e)]
+    (neg
+     (add
+      (mul (log [1 R] r) r)
+      (mul (log [1 R] l) l)))))
