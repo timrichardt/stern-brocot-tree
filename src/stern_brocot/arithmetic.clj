@@ -320,10 +320,29 @@
             (cons dir (log a b next-mem dir))
 
             (SSB> next-mem b)
-            (log (div b mem) a [1] (flip dir))
+            (log (div b mem) a [1] (flip dir)))))))
 
-            :else
-            nil)))))
+(defn exp
+  "Greedy exponential using [[log]]."
+  ([a b]
+   (cond (SSB= a [1])
+         [1]
+
+         (SSB< a [1])
+         (inv (cons 1 (exp (inv a) b [1])))
+
+         (SSB< b [0])
+         (inv (cons 1 (exp a (neg b) [1])))
+
+         :else
+         (cons 1 (exp a b [1]))))
+  ([a b r]
+   (lazy-seq
+    (cond (SSB< (log a r) b)
+          (cons R (exp a b (conj r R)))
+
+          (SSB> (log a r) b)
+          (cons L (exp a b (conj r L)))))))
 
 (defn entropy
   [[s & bs :as b]]
