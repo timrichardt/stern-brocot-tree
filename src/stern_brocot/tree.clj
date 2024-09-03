@@ -138,8 +138,51 @@
 
 (defn fmt
   [u]
-  (apply str (map {-1 "-"
-                   0  "0"
-                   1  nil
-                   L  "L"
-                   R  "R"} u)))
+  (cond (= u [1])
+        "1"
+
+        (= u [-1])
+        "-1"
+
+        :else
+        (apply str (map {-1 "-"
+                         0  "0"
+                         1  nil
+                         L  "L"
+                         R  "R"} u))))
+
+(defn fmt*
+  [u]
+  (cond (= u [1])
+        "1"
+
+        (= u [-1])
+        "-1"
+
+        :else
+        (apply str (map {-1 "-"
+                         0  "0"
+                         1  nil
+                         L  "◯"
+                         R  "⬤"} u))))
+
+(defn fmt-cf
+  [cf]
+  (str "["
+       (->> cf
+            (interpose ",")
+            (apply str))
+       "]"))
+
+(defn- next-level
+  [b]
+  [(conj b L)
+   (conj b R)])
+
+(defn level
+  "Returns a sequence of all numbers up to `n` bits."
+  ([n] (level n [[1]]))
+  ([n bs]
+   (if (zero? n)
+     bs
+     (concat bs (mapcat next-level (level (dec n) bs))))))
