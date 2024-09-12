@@ -20,7 +20,7 @@
             (neg? sum)
             -1
 
-            :otherwise
+            :else
             false))))
 
 (defn- nom-sgn
@@ -80,7 +80,7 @@
          (emit? c d a b)
          (cons L (hom-emit (D H) u))
 
-         :otherwise
+         :else
          (let [[f & u'] u]
            (hom-emit (f H) u')))))
 

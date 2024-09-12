@@ -66,7 +66,7 @@
           (< d n)
           (cons R (Q->SB (- n d) d))
 
-          :otherwise
+          :else
           []))))
 
 ;; SB can be extended to include non-positive rational numbers by
@@ -82,6 +82,11 @@
   "Given a sequence on SSB, returns the corresponding element of Q."
   [[s & u]]
   (* s (SB->Q u)))
+
+(defn SSB->N
+  "Given a sequence on SSB, returns the corresponding element of N."
+  [[s & u]]
+  (* s (SB->N u)))
 
 (defn Q->SSB
   "Given a rational number, returns the corresponding element of SSB."
@@ -110,7 +115,7 @@
           (neg? x)
           -1
 
-          :otherwise
+          :else
           0)))
 
 (defn flip
@@ -163,16 +168,26 @@
         (apply str (map {-1 "-"
                          0  "0"
                          1  nil
-                         L  "◯"
-                         R  "⬤"} u))))
+                         L  "○"
+                         R  "●"} u))))
 
 (defn fmt-cf
-  [cf]
-  (str "["
-       (->> cf
-            (interpose ",")
-            (apply str))
-       "]"))
+  [[s & cf]]
+  (let [cf (when (seq cf)
+             (concat (butlast cf) [(inc (last cf))]))]
+    (cond (empty? cf)
+          (if (zero? s)
+            "[0]"
+            (str (when (neg? s) "-") "[1]"))
+
+          :else
+          (str
+           (when (neg? s) "-")
+           "["
+           (->> cf
+                (interpose ",")
+                (apply str))
+           "]"))))
 
 (defn- next-level
   [b]

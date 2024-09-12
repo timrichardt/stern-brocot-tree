@@ -1,6 +1,7 @@
 (ns stern-brocot.arithmetic
   (:require [stern-brocot.tree :refer [L R
                                        SB->N
+                                       SSB->N
                                        node->Q
                                        SSB->Q
                                        SB->Q
@@ -8,7 +9,10 @@
                                        flip
                                        inv
                                        neg
-                                       fmt]]
+                                       fmt
+                                       fmt*
+                                       fmt-cf
+                                       level]]
 
             [stern-brocot.bihomographic :refer [bihom]]))
 
